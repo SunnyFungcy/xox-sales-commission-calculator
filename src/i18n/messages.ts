@@ -31,7 +31,7 @@ const zhTW = {
   vipAuto: "自動（依 30 日交易量）",
   labelExtraReq: "額外要求",
   labelExtraReqTitle:
-    "達標＝依 30 日交易量對照表給 Rebate%；不達標＝Rebate% 為 0。",
+    "達標／不達標由銷售手動勾選。達標＝依 30 日交易量對照階梯給完整 Rebate%；不達標＝依該階梯降一級（階梯 1 不達標則 Rebate% 為 0）。",
   extraQualified: "達標",
   extraNotQualified: "不達標",
   labelReferrer: "推薦人",
@@ -201,7 +201,7 @@ const en: Record<MessageKey, string> = {
   vipAuto: "Auto (from 30-day volume)",
   labelExtraReq: "Extra requirement",
   labelExtraReqTitle:
-    "Qualified: Rebate% from the 30-day volume table. Not qualified: Rebate% is 0.",
+    "Qualified / not qualified is set manually by sales. Qualified: full Rebate% for the 30-day volume tier. Not qualified: one tier lower (tier 1 not qualified → 0%).",
   extraQualified: "Qualified",
   extraNotQualified: "Not qualified",
   labelReferrer: "Referrer",

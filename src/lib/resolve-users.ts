@@ -1,8 +1,13 @@
 /**
- * 根据 30 日自身交易量、推荐人数解析每个用户的 VIP、Client Rebate Tier、Rebate%
+ * 依 30 日自身交易量等解析 VIP、普通客戶階梯與 Rebate%。
+ * 普通客戶「額外要求」不達標時 Rebate 降一級（見 rebatePercentWhenExtraReqNotMet）。
  */
 import { getVIPTierByVolume, getVIPTierById, type VIPTier } from "@/config/vip";
-import { getClientRebateTierByVolumeOnly, rebatePercentFromTier } from "@/config/client-rebate";
+import {
+  getClientRebateTierByVolumeOnly,
+  rebatePercentFromTier,
+  rebatePercentWhenExtraReqNotMet,
+} from "@/config/client-rebate";
 import { getAmbassadorGradeById } from "@/config/ambassador";
 import { getInvestorGradeById } from "@/config/investor";
 import { getVIPTierByLabel } from "@/config/vip";
@@ -25,7 +30,7 @@ export interface ResolvedUser {
   vipTier: VIPTier;
   clientRebateTier: number | null; // tier number or null
   rebatePercent: number;
-  /** 僅當普通客戶且選「未達到」時：若達標後可得的 Rebate%（僅依交易量對照表） */
+  /** 僅當普通客戶且選「不達標」時：若改為達標後、依交易量階梯可得的完整 Rebate%（本階） */
   rebatePercentIfQualified?: number;
   isAmbassadorOrInvestor: boolean;
 }
@@ -156,14 +161,13 @@ export function resolveUsers(
       const overrideTier = u.vipTierId ? getVIPTierById(u.vipTierId, vipScheme) : undefined;
       vipTier = overrideTier ?? getVIPTierByVolume(volume30dUsd, vipScheme);
       let rebatePercentIfQualified: number | undefined;
+      const tierByVolume = getClientRebateTierByVolumeOnly(volume30dUsd, clientScheme);
+      clientRebateTier = tierByVolume?.tier ?? null;
       if (u.referral100kStatus === "未達到") {
-        rebatePercent = 0;
-        clientRebateTier = null;
-        const tierByVolume = getClientRebateTierByVolumeOnly(volume30dUsd, clientScheme);
-        rebatePercentIfQualified = tierByVolume ? tierByVolume.rebatePercent : undefined;
+        rebatePercent = rebatePercentWhenExtraReqNotMet(tierByVolume, clientScheme);
+        // 一律帶入，讓 UI 能辨識「不達標」；無交易量階梯時為 0
+        rebatePercentIfQualified = tierByVolume?.rebatePercent ?? 0;
       } else {
-        const tierByVolume = getClientRebateTierByVolumeOnly(volume30dUsd, clientScheme);
-        clientRebateTier = tierByVolume?.tier ?? null;
         rebatePercent = rebatePercentFromTier(tierByVolume);
       }
       result.set(u.id, {

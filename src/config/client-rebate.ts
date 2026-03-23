@@ -1,6 +1,7 @@
 /**
- * Client Commission Rebate Scheme
- * 仅非大使/非投资者；需满足 30 日交易量 + 达标推荐人数（每推荐人 ≥100k volume）
+ * Client Commission Rebate Scheme（階梯表）
+ * 普通客戶 Rebate% 以「僅依 30 日交易量」對照階梯為主；「額外要求」達標/不達標由銷售手動勾選，
+ * 不達標時依規則降一級（見 rebatePercentWhenExtraReqNotMet）。
  */
 export interface ClientRebateTier {
   id: string;
@@ -44,4 +45,20 @@ export function getClientRebateTierByVolumeOnly(
     if (volume30dUsd >= t.minVolumeUsd) matched = t;
   }
   return matched;
+}
+
+/**
+ * 普通客戶選「不達標」時的 Rebate%：依交易量對照到的 volumeTier **降一級**。
+ * - 無階梯或階梯 1 → 0%
+ * - 階梯 N（N>1）→ 使用 scheme 中 tier (N-1) 的 rebatePercent（從設定讀取，不硬編）
+ */
+export function rebatePercentWhenExtraReqNotMet(
+  volumeTier: ClientRebateTier | null,
+  scheme: ClientRebateTier[]
+): number {
+  if (!volumeTier) return 0;
+  const prevTierNum = volumeTier.tier - 1;
+  if (prevTierNum <= 0) return 0;
+  const row = scheme.find((t) => t.tier === prevTierNum);
+  return row?.rebatePercent ?? 0;
 }
