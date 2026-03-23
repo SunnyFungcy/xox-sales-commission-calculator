@@ -1,0 +1,6 @@
+[
+  { "id": "本人", "type": "ambassador", "ambassadorGradeId": "star", "referrerId": null },
+  { "id": "b", "type": "client", "referrerId": "本人" },
+  { "id": "c", "type": "client", "referrerId": "b" },
+  { "id": "d", "type": "client", "referrerId": "c" }
+]
