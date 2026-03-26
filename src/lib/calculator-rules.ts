@@ -18,6 +18,7 @@ export type { EdgexShare } from "@/config/edgex";
 export interface CalculatorRules {
   vipScheme: VIPTier[];
   edgexShare: EdgexShare;
+  /** 普通客戶「返傭階梯」規則表（僅展示／匯入相容）；實際 Rebate% 以 VIP Commission 為準 */
   clientRebateScheme: ClientRebateTier[];
   ambassadorGrades: AmbassadorGrade[];
   investorGrades: InvestorGrade[];

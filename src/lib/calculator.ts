@@ -1,5 +1,5 @@
 /**
- * 主计算流程：交易流水 -> 每笔 fee、平台净收入、3 层返佣 -> 汇总报表
+ * 主计算流程：交易流水 -> 每笔 fee、平台净收入、返佣分配（以 fee 為基數之階差模型）-> 汇总报表
  */
 import type { UserInput, TradeInput, RebateOverrideInput } from "@/types";
 import type { ResolvedUser } from "@/lib/resolve-users";
@@ -104,7 +104,7 @@ export function runCalculator(input: CalculatorInput): CalculatorResult {
       (id) => resolvedUsers.get(id)?.rebatePercent ?? 0
     );
     const allocations = calcRebateAllocations(
-      feeResult.platformNetUsd,
+      feeResult.feeUsd,
       chain,
       rebatePercents,
       overrides,

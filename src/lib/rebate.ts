@@ -1,14 +1,17 @@
 /**
- * 3 层返佣分配
- * 从交易者往上最多 3 层；返佣基于该笔 fee，按 rebate% 差额分配。
+ * 多層返傭分配（至多 3 層用戶鏈）
+ * 基數 = 該筆交易「手續費」feeUsd（成交量 × 交易者 VIP 之 Maker/Taker 費率），
+ * 非 platformNetUsd。每一對相鄰 (下線, 上線)：上線拿 feeUsd × (上線% − 下線%) ÷ 100（差 ≤ 0 則 0）。
+ * 交易者本人不在此函式內另發「整筆 r0%」切片，僅上線依階差拿錢。
  */
 import type { RebateOverrideInput } from "@/types";
 
 export interface RebateAllocation {
   userId: string;
   amountUsd: number;
+  /** 本筆對該用戶生效的「階差百分比」或覆蓋值（對 feeUsd） */
   rebatePercent: number;
-  layer: number; // 1=交易者本人, 2=直接上线, 3=上线的上线
+  layer: number; // 1=第一個上線, 2=第二個上線（無交易者列）
   fromTraderUserId: string;
 }
 
@@ -45,14 +48,16 @@ export function getOverrideRebatePercent(
 }
 
 /**
- * 3 层分配：基数 = 该笔平台净收入（fee - EdgeX）
- * 第1层（交易者）拿 base * rebate[0]
- * 第2层拿 base * (rebate[1] - rebate[0])
- * 第3层拿 base * (rebate[2] - rebate[1] - rebate[0])
- * 若同等级大使默认上线不拿下线，除非有手动覆盖
+ * 依「手續費 × 相鄰兩層 Commission Rebate 差」分配。
+ *
+ * 驗算範例（與產品手算一致）：
+ * - c 1M Taker VIP2 taker 0.034% → fee=340；b (45−35)%→34；本人 (50−45)%→17。
+ * - b 5M Maker VIP4 maker 0.006% → fee=300；本人 (50−45)%→15。
+ * - b 1M Taker VIP4 taker 0.028% → fee=280；本人 5%→14。
+ * - 本人三筆合計 17+15+14=46（若文檔寫 44 為 15+14 誤加；嚴格按階差公式為 46）。
  */
 export function calcRebateAllocations(
-  rebateBaseUsd: number,
+  feeUsd: number,
   chain: string[],
   rebatePercents: number[], // 与 chain 同序 [交易者, 上线1, 上线2]
   overrides: RebateOverrideInput[],
@@ -60,40 +65,33 @@ export function calcRebateAllocations(
 ): RebateAllocation[] {
   const result: RebateAllocation[] = [];
   const traderId = chain[0];
+  if (!traderId || chain.length < 2 || feeUsd <= 0) {
+    return result;
+  }
 
-  const r0 = Math.max(0, rebatePercents[0] ?? 0);
-  result.push({
-    userId: chain[0],
-    amountUsd: rebateBaseUsd * (r0 / 100),
-    rebatePercent: r0,
-    layer: 1,
-    fromTraderUserId: traderId,
-  });
+  for (let i = 0; i < chain.length - 1; i++) {
+    const downId = chain[i];
+    const upId = chain[i + 1];
+    const rDown = Math.max(0, rebatePercents[i] ?? 0);
+    const rUp = Math.max(0, rebatePercents[i + 1] ?? 0);
 
-  let usedPercent = r0;
-
-  for (let i = 1; i < chain.length; i++) {
-    const uplineId = chain[i];
-    const uplineRebate = Math.max(0, rebatePercents[i] ?? 0);
-    const override = getOverrideRebatePercent(traderId, uplineId, overrides);
-
+    const override = getOverrideRebatePercent(traderId, upId, overrides);
     let slicePercent: number;
     if (override !== null) {
-      slicePercent = override;
+      slicePercent = Math.max(0, override);
     } else if (
-      isAmbassadorOrInvestor(uplineId) &&
+      isAmbassadorOrInvestor(upId) &&
       isAmbassadorOrInvestor(traderId)
     ) {
       slicePercent = 0;
     } else {
-      slicePercent = Math.max(0, uplineRebate - usedPercent);
+      slicePercent = Math.max(0, rUp - rDown);
     }
 
-    usedPercent += uplineRebate;
     if (slicePercent > 0) {
       result.push({
-        userId: uplineId,
-        amountUsd: rebateBaseUsd * (slicePercent / 100),
+        userId: upId,
+        amountUsd: feeUsd * (slicePercent / 100),
         rebatePercent: slicePercent,
         layer: i + 1,
         fromTraderUserId: traderId,

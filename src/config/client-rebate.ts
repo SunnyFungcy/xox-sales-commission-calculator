@@ -1,7 +1,8 @@
 /**
  * Client Commission Rebate Scheme（階梯表）
- * 普通客戶 Rebate% 以「僅依 30 日交易量」對照階梯為主；「額外要求」達標/不達標由銷售手動勾選，
- * 不達標時依規則降一級（見 rebatePercentWhenExtraReqNotMet）。
+ * 僅作「費率與規則參考」區塊展示與 JSON 規則相容；**普通客戶實際 Rebate% 以 VIP Commission Rebate 為準**
+ * （見 `resolveUsers` + `VIP_COMMISSION_REBATE_PERCENT` / `rebatePercentWhenExtraReqNotMetVip`）。
+ * 下列 `rebatePercentWhenExtraReqNotMet` 保留給階梯表語意類比，不再驅動主計算。
  */
 export interface ClientRebateTier {
   id: string;

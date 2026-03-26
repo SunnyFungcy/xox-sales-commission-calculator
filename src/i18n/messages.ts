@@ -31,7 +31,7 @@ const zhTW = {
   vipAuto: "自動（依 30 日交易量）",
   labelExtraReq: "額外要求",
   labelExtraReqTitle:
-    "達標／不達標由銷售手動勾選。達標＝依 30 日交易量對照階梯給完整 Rebate%；不達標＝依該階梯降一級（階梯 1 不達標則 Rebate% 為 0）。",
+    "達標／不達標由銷售手動勾選。達標＝依當前 VIP 檔位之 Commission Rebate 全額；不達標＝依 VIP 階序降一級（Non VIP 不達標或已最低階則 0%）。",
   extraQualified: "達標",
   extraNotQualified: "不達標",
   labelReferrer: "推薦人",
@@ -79,12 +79,12 @@ const zhTW = {
 
   userTableTitle: "用戶等級與返傭匯總",
   userTableHint1:
-    "本人列顯示總返傭收入；下線列顯示該下線（及其下線）交易為本人帶來的返傭貢獻。",
+    "本人列依上線層級拆分各層階差返傭（加總即總收入）；下線列顯示該下線（及其下線）交易為本人帶來的返傭貢獻。",
   userTableHint2Bold: "如何解讀：",
   userTableHint2:
-    "本人那一欄的數字即為您的總返傭收入。下線欄的數字表示「該下線及其下線的交易為您帶來的返傭」——例如若結構為 本人→b→c，則 b 的數字已包含來自 b 與 c 交易流入您口袋的總和，c 的數字僅來自 c 的交易。因此總收入請看本人列即可，不需將下線數字加總。",
+    "本人那一欄依「上線第幾層」列出階差返傭，各列加總即為您的總返傭收入。下線欄的數字表示「該下線及其下線的交易為您帶來的返傭」——例如若結構為 本人→b→c，則 b 的數字已包含來自 b 與 c 交易流入您口袋的總和，c 的數字僅來自 c 的交易。因此總收入請看本人列各層加總即可，不需將下線數字加總。",
   userTableWarnZero:
-    "目前所有返傭為 0。請檢查下方「交易明細」：若每筆的「手續費」「平台淨收入」「返傭分配」皆為 0 或 —，表示該筆交易未產生可分配的平台淨收入（例如交易未正確對應到用戶、或資料有誤）。請確認已填寫交易且「執行交易的用戶」為上述用戶之一，並重新點擊「計算」。",
+    "目前所有返傭為 0。請檢查下方「交易明細」：若每筆「手續費」為 0 或「返傭分配」皆為 —，表示無可分配之階差返傭（例如無上線、階差皆 ≤0、或交易未對應到用戶）。請確認推薦鏈與資料後重新點擊「計算」。",
 
   thUserId: "用戶 ID",
   thType: "類型",
@@ -94,7 +94,9 @@ const zhTW = {
   thExtraReq: "額外要求",
   thRebatePct: "Rebate%",
   thRebateIncome: "返傭收入／對本人貢獻 (USD)",
-  thRebateIncomeTitle: "本人列＝本人總返傭收入；下線列＝該下線對本人的返傭貢獻 (USD)",
+  thRebateIncomeTitle:
+    "本人列＝依「上線層級」拆分：第 1 層＝交易者之直接上線的階差份額、第 2 層＝再上一跳，以此類推（加總即總返傭）。下線列＝該下線對本人的返傭貢獻 (USD)。",
+  rebateLayerRow: "上線第 {layer} 層",
 
   tableSelf: "本人",
   statusQualified: "達標",
@@ -202,7 +204,7 @@ const en: Record<MessageKey, string> = {
   vipAuto: "Auto (from 30-day volume)",
   labelExtraReq: "Extra requirement",
   labelExtraReqTitle:
-    "Qualified / not qualified is set manually by sales. Qualified: full Rebate% for the 30-day volume tier. Not qualified: one tier lower (tier 1 not qualified → 0%).",
+    "Qualified / not qualified is set manually by sales. Qualified: full Commission Rebate for the current VIP tier. Not qualified: one VIP tier lower (Non VIP or lowest → 0%).",
   extraQualified: "Qualified",
   extraNotQualified: "Not qualified",
   labelReferrer: "Referrer",
@@ -250,12 +252,12 @@ const en: Record<MessageKey, string> = {
 
   userTableTitle: "Users, tiers & rebate summary",
   userTableHint1:
-    "Self row shows total rebate income; downline rows show how much each downline (and their subtree) contributed to your rebates.",
+    "Self row breaks out rebate by upline level (tier-delta hops from trader); lines sum to your total. Downline rows show each downline’s contribution to you.",
   userTableHint2Bold: "How to read:",
   userTableHint2:
-    "The Self column is your total rebate. A downline column is “rebates to you from that downline’s subtree.” Example Self→b→c: b’s number already includes flows from b and c; c’s number is only from c. Use the Self row for total income — do not sum all downline columns.",
+    "The Self column lists rebate by upline level; the lines sum to your total. A downline column is “rebates to you from that downline’s subtree.” Example Self→b→c: b’s number already includes flows from b and c; c’s number is only from c. Use the Self row (sum of levels) for total income — do not sum all downline columns.",
   userTableWarnZero:
-    "All rebates are 0. Check “Trade details” below: if fee, platform net, and allocations are 0 or —, that trade had no distributable platform net (wrong user mapping or bad data). Ensure trades use valid users and click Calculate again.",
+    "All rebates are 0. In “Trade details”, if fee is 0 or allocations are —, there is no fee-based tier-delta rebate (no upline, non-positive deltas, or bad user mapping). Fix the referral chain or data and click Calculate again.",
 
   thUserId: "User ID",
   thType: "Type",
@@ -266,7 +268,9 @@ const en: Record<MessageKey, string> = {
   thRebatePct: "Rebate%",
   thRebateIncome: "Rebate / contribution to you (USD)",
   thRebateIncomeTitle:
-    "Self row = your total rebate; downline = that downline’s contribution to you (USD)",
+    "Self row: amounts by upline level — L1 = trader’s direct upline’s slice, L2 = next hop, etc. (sum = total rebate). Downline = contribution to you (USD).",
+
+  rebateLayerRow: "Upline level {layer}",
 
   tableSelf: "Self",
   statusQualified: "Qualified",
@@ -362,6 +366,11 @@ export function getT(locale: Locale): (key: MessageKey) => string {
 /** Replace a single {count} placeholder (for trade table footer). */
 export function formatCount(template: string, count: number): string {
   return template.replace("{count}", String(count));
+}
+
+/** Replace {layer} for self rebate breakdown rows. */
+export function formatLayer(template: string, layer: number): string {
+  return template.replace("{layer}", String(layer));
 }
 
 /**

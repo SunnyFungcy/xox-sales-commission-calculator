@@ -1,13 +1,15 @@
 /**
- * 依 30 日自身交易量等解析 VIP、普通客戶階梯與 Rebate%。
- * 普通客戶「額外要求」不達標時 Rebate 降一級（見 rebatePercentWhenExtraReqNotMet）。
+ * 依 30 日自身交易量等解析 VIP、Rebate%。
+ * 普通客戶 Rebate% 與「VIP 等級與 Maker／Taker 費率」之 Commission Rebate 一致（見 vip.ts）；
+ * 「額外要求」不達標時依 VIP 階序降一級（rebatePercentWhenExtraReqNotMetVip）。
  */
-import { getVIPTierByVolume, getVIPTierById, type VIPTier } from "@/config/vip";
 import {
-  getClientRebateTierByVolumeOnly,
-  rebatePercentFromTier,
-  rebatePercentWhenExtraReqNotMet,
-} from "@/config/client-rebate";
+  getVIPTierByVolume,
+  getVIPTierById,
+  type VIPTier,
+  lookupCommissionRebateByVipTierId,
+  rebatePercentWhenExtraReqNotMetVip,
+} from "@/config/vip";
 import { getAmbassadorGradeById } from "@/config/ambassador";
 import { getInvestorGradeById } from "@/config/investor";
 import { getVIPTierByLabel } from "@/config/vip";
@@ -28,9 +30,13 @@ export interface ResolvedUser {
   volume30dSubtreeUsd: number;
   referralsWith100k: number;
   vipTier: VIPTier;
-  clientRebateTier: number | null; // tier number or null
+  /**
+   * 舊：客戶返傭階梯 tier 編號。普通客戶 Rebate% 已改跟 VIP Commission，此欄對 client 恒為 null。
+   * 大使／投資者仍為 null。
+   */
+  clientRebateTier: number | null;
   rebatePercent: number;
-  /** 僅當普通客戶且選「不達標」時：若改為達標後、依交易量階梯可得的完整 Rebate%（本階） */
+  /** 僅當普通客戶且「不達標」時：若改為達標後、依當前 VIP 檔位應得的完整 Commission Rebate% */
   rebatePercentIfQualified?: number;
   isAmbassadorOrInvestor: boolean;
 }
@@ -122,7 +128,6 @@ export function resolveUsers(
   users.forEach((u) => userMap.set(u.id, u));
 
   const vipScheme = rules.vipScheme;
-  const clientScheme = rules.clientRebateScheme;
   const ambGrades = rules.ambassadorGrades;
   const invGrades = rules.investorGrades;
 
@@ -160,15 +165,14 @@ export function resolveUsers(
     } else {
       const overrideTier = u.vipTierId ? getVIPTierById(u.vipTierId, vipScheme) : undefined;
       vipTier = overrideTier ?? getVIPTierByVolume(volume30dUsd, vipScheme);
+      clientRebateTier = null;
+      const baseCommission = lookupCommissionRebateByVipTierId(vipTier.id);
       let rebatePercentIfQualified: number | undefined;
-      const tierByVolume = getClientRebateTierByVolumeOnly(volume30dUsd, clientScheme);
-      clientRebateTier = tierByVolume?.tier ?? null;
       if (u.referral100kStatus === "未達到") {
-        rebatePercent = rebatePercentWhenExtraReqNotMet(tierByVolume, clientScheme);
-        // 一律帶入，讓 UI 能辨識「不達標」；無交易量階梯時為 0
-        rebatePercentIfQualified = tierByVolume?.rebatePercent ?? 0;
+        rebatePercent = rebatePercentWhenExtraReqNotMetVip(vipTier.id);
+        rebatePercentIfQualified = baseCommission;
       } else {
-        rebatePercent = rebatePercentFromTier(tierByVolume);
+        rebatePercent = baseCommission;
       }
       result.set(u.id, {
         id: u.id,

@@ -15,7 +15,7 @@ import {
 } from "@/lib/calculator-rules";
 import { RulesReferenceSection } from "@/components/RulesReferenceSection";
 import type { UserInput, TradeInput, RebateOverrideInput } from "@/types";
-import { formatCount, type Locale } from "@/i18n/messages";
+import { formatCount, formatLayer, type Locale } from "@/i18n/messages";
 import { useDashboardLocale } from "@/i18n/useDashboardLocale";
 
 const AMBASSADOR_GRADE_IDS = [
@@ -826,8 +826,17 @@ export default function DashboardPage() {
                 if (u.referrerId) referrerMap.set(u.id, u.referrerId);
               });
               const contributionToSelfByUser = new Map<string, number>();
+              const selfRebateByLayerUsd = new Map<number, number>();
               if (selfUserId) {
                 for (const tr of result.tradeResults) {
+                  for (const a of tr.allocations) {
+                    if (a.userId === selfUserId) {
+                      selfRebateByLayerUsd.set(
+                        a.layer,
+                        (selfRebateByLayerUsd.get(a.layer) ?? 0) + a.amountUsd
+                      );
+                    }
+                  }
                   const selfAlloc =
                     tr.allocations.find((a) => a.userId === selfUserId)?.amountUsd ?? 0;
                   if (selfAlloc <= 0) continue;
@@ -921,11 +930,41 @@ export default function DashboardPage() {
                               </span>
                             )}
                           </td>
-                          <td className="py-2 px-2 text-right">
-                            {amount.toLocaleString(numberLocale, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
+                          <td className="py-2 px-2 text-right align-top">
+                            {isSelf ? (
+                              selfRebateByLayerUsd.size > 0 ? (
+                                <div className="space-y-1">
+                                  {Array.from(selfRebateByLayerUsd.entries())
+                                    .sort((x, y) => x[0] - y[0])
+                                    .map(([layer, layerAmt]) => (
+                                      <div
+                                        key={layer}
+                                        className="flex justify-end gap-2 flex-wrap leading-tight"
+                                      >
+                                        <span className="text-slate-500">
+                                          {formatLayer(t("rebateLayerRow"), layer)}
+                                        </span>
+                                        <span className="tabular-nums font-medium">
+                                          {layerAmt.toLocaleString(numberLocale, {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                          })}
+                                        </span>
+                                      </div>
+                                    ))}
+                                </div>
+                              ) : (
+                                amount.toLocaleString(numberLocale, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })
+                              )
+                            ) : (
+                              amount.toLocaleString(numberLocale, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })
+                            )}
                           </td>
                         </tr>
                       );
