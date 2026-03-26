@@ -79,10 +79,7 @@ const zhTW = {
 
   userTableTitle: "用戶等級與返傭匯總",
   userTableHint1:
-    "本人列依上線層級拆分各層階差返傭（加總即總收入）；下線列顯示該下線（及其下線）交易為本人帶來的返傭貢獻。",
-  userTableHint2Bold: "如何解讀：",
-  userTableHint2:
-    "本人那一欄依「上線第幾層」列出階差返傭，各列加總即為您的總返傭收入。下線欄的數字表示「該下線及其下線的交易為您帶來的返傭」——例如若結構為 本人→b→c，則 b 的數字已包含來自 b 與 c 交易流入您口袋的總和，c 的數字僅來自 c 的交易。因此總收入請看本人列各層加總即可，不需將下線數字加總。",
+    "本人列為您的返傭總額。其餘用戶列顯示：本人因「該用戶作為交易者」的成交所獲得之返傭（例如 b 成交對應上線第 1 層那份、c 成交對應上線第 2 層那份）。",
   userTableWarnZero:
     "目前所有返傭為 0。請檢查下方「交易明細」：若每筆「手續費」為 0 或「返傭分配」皆為 —，表示無可分配之階差返傭（例如無上線、階差皆 ≤0、或交易未對應到用戶）。請確認推薦鏈與資料後重新點擊「計算」。",
 
@@ -95,8 +92,7 @@ const zhTW = {
   thRebatePct: "Rebate%",
   thRebateIncome: "返傭收入／對本人貢獻 (USD)",
   thRebateIncomeTitle:
-    "本人列＝依「上線層級」拆分：第 1 層＝交易者之直接上線的階差份額、第 2 層＝再上一跳，以此類推（加總即總返傭）。下線列＝該下線對本人的返傭貢獻 (USD)。",
-  rebateLayerRow: "上線第 {layer} 層",
+    "本人列＝返傭總額；其他列＝本人因該用戶執行交易而獲得的返傭 (USD)。",
 
   tableSelf: "本人",
   statusQualified: "達標",
@@ -252,10 +248,7 @@ const en: Record<MessageKey, string> = {
 
   userTableTitle: "Users, tiers & rebate summary",
   userTableHint1:
-    "Self row breaks out rebate by upline level (tier-delta hops from trader); lines sum to your total. Downline rows show each downline’s contribution to you.",
-  userTableHint2Bold: "How to read:",
-  userTableHint2:
-    "The Self column lists rebate by upline level; the lines sum to your total. A downline column is “rebates to you from that downline’s subtree.” Example Self→b→c: b’s number already includes flows from b and c; c’s number is only from c. Use the Self row (sum of levels) for total income — do not sum all downline columns.",
+    "Self row is your total rebate. Other rows show rebate you earned from trades executed by that user (e.g. b’s trades vs c’s trades in a Self→b→c chain).",
   userTableWarnZero:
     "All rebates are 0. In “Trade details”, if fee is 0 or allocations are —, there is no fee-based tier-delta rebate (no upline, non-positive deltas, or bad user mapping). Fix the referral chain or data and click Calculate again.",
 
@@ -268,9 +261,7 @@ const en: Record<MessageKey, string> = {
   thRebatePct: "Rebate%",
   thRebateIncome: "Rebate / contribution to you (USD)",
   thRebateIncomeTitle:
-    "Self row: amounts by upline level — L1 = trader’s direct upline’s slice, L2 = next hop, etc. (sum = total rebate). Downline = contribution to you (USD).",
-
-  rebateLayerRow: "Upline level {layer}",
+    "Self row = total rebate; other rows = rebate from trades where that user was the trader (USD).",
 
   tableSelf: "Self",
   statusQualified: "Qualified",
@@ -366,11 +357,6 @@ export function getT(locale: Locale): (key: MessageKey) => string {
 /** Replace a single {count} placeholder (for trade table footer). */
 export function formatCount(template: string, count: number): string {
   return template.replace("{count}", String(count));
-}
-
-/** Replace {layer} for self rebate breakdown rows. */
-export function formatLayer(template: string, layer: number): string {
-  return template.replace("{layer}", String(layer));
 }
 
 /**

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   runCalculator,
   type CalculatorResult,
@@ -15,7 +15,7 @@ import {
 } from "@/lib/calculator-rules";
 import { RulesReferenceSection } from "@/components/RulesReferenceSection";
 import type { UserInput, TradeInput, RebateOverrideInput } from "@/types";
-import { formatCount, formatLayer, type Locale } from "@/i18n/messages";
+import { formatCount, type Locale } from "@/i18n/messages";
 import { useDashboardLocale } from "@/i18n/useDashboardLocale";
 
 const AMBASSADOR_GRADE_IDS = [
@@ -64,20 +64,6 @@ function toIsoDate(dateStr: string): string {
   if (!dateStr) return new Date().toISOString();
   const d = new Date(dateStr);
   return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
-}
-
-/** 是否 ancestor 為 node 的祖先（沿 referrerMap 向上） */
-function isAncestor(
-  ancestor: string,
-  node: string,
-  referrerMap: Map<string, string>
-): boolean {
-  let cur: string | undefined = node;
-  while (cur) {
-    if (cur === ancestor) return true;
-    cur = referrerMap.get(cur);
-  }
-  return false;
 }
 
 const defaultUserRows: UserRow[] = [
@@ -193,6 +179,19 @@ export default function DashboardPage() {
     getDefaultCalculatorRules()
   );
   const resultSectionRef = useRef<HTMLDivElement>(null);
+
+  const resultSelfUserId = useMemo(() => {
+    if (!result) return null;
+    return (
+      Array.from(result.resolvedUsers.values()).find((u) => !u.referrerId)?.id ?? null
+    );
+  }, [result]);
+
+  const displayResultUserId = useCallback(
+    (id: string) =>
+      resultSelfUserId != null && id === resultSelfUserId ? t("tableSelf") : id,
+    [resultSelfUserId, t]
+  );
 
   useEffect(() => {
     const stored = loadCalculatorRulesFromStorage();
@@ -808,10 +807,6 @@ export default function DashboardPage() {
           <section className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm overflow-x-auto">
             <h2 className="text-lg font-semibold text-slate-700 mb-4">{t("userTableTitle")}</h2>
             <p className="text-sm text-slate-500 mb-3">{t("userTableHint1")}</p>
-            <p className="text-sm text-slate-500 mb-3">
-              <strong>{t("userTableHint2Bold")}</strong>
-              {t("userTableHint2")}
-            </p>
             {result.tradeResults.length > 0 &&
               Array.from(result.userRebateTotalUsd.values()).every((v) => v === 0) && (
               <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2 mb-3">
@@ -821,37 +816,18 @@ export default function DashboardPage() {
             {(() => {
               const selfUserId =
                 Array.from(result.resolvedUsers.values()).find((u) => !u.referrerId)?.id ?? null;
-              const referrerMap = new Map<string, string>();
-              users.forEach((u) => {
-                if (u.referrerId) referrerMap.set(u.id, u.referrerId);
-              });
+              /** 本人從每筆成交拿到的返傭，只歸因於「執行該筆交易的用戶」（便於對應 b / c 等） */
               const contributionToSelfByUser = new Map<string, number>();
-              const selfRebateByLayerUsd = new Map<number, number>();
               if (selfUserId) {
                 for (const tr of result.tradeResults) {
-                  for (const a of tr.allocations) {
-                    if (a.userId === selfUserId) {
-                      selfRebateByLayerUsd.set(
-                        a.layer,
-                        (selfRebateByLayerUsd.get(a.layer) ?? 0) + a.amountUsd
-                      );
-                    }
-                  }
                   const selfAlloc =
                     tr.allocations.find((a) => a.userId === selfUserId)?.amountUsd ?? 0;
                   if (selfAlloc <= 0) continue;
-                  for (const u of Array.from(result.resolvedUsers.values())) {
-                    if (u.id === selfUserId) continue;
-                    if (
-                      tr.trade.userId === u.id ||
-                      isAncestor(u.id, tr.trade.userId, referrerMap)
-                    ) {
-                      contributionToSelfByUser.set(
-                        u.id,
-                        (contributionToSelfByUser.get(u.id) ?? 0) + selfAlloc
-                      );
-                    }
-                  }
+                  const traderId = tr.trade.userId;
+                  contributionToSelfByUser.set(
+                    traderId,
+                    (contributionToSelfByUser.get(traderId) ?? 0) + selfAlloc
+                  );
                 }
               }
               const sortedUsers = Array.from(result.resolvedUsers.values()).sort((a, b) => {
@@ -930,41 +906,11 @@ export default function DashboardPage() {
                               </span>
                             )}
                           </td>
-                          <td className="py-2 px-2 text-right align-top">
-                            {isSelf ? (
-                              selfRebateByLayerUsd.size > 0 ? (
-                                <div className="space-y-1">
-                                  {Array.from(selfRebateByLayerUsd.entries())
-                                    .sort((x, y) => x[0] - y[0])
-                                    .map(([layer, layerAmt]) => (
-                                      <div
-                                        key={layer}
-                                        className="flex justify-end gap-2 flex-wrap leading-tight"
-                                      >
-                                        <span className="text-slate-500">
-                                          {formatLayer(t("rebateLayerRow"), layer)}
-                                        </span>
-                                        <span className="tabular-nums font-medium">
-                                          {layerAmt.toLocaleString(numberLocale, {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                          })}
-                                        </span>
-                                      </div>
-                                    ))}
-                                </div>
-                              ) : (
-                                amount.toLocaleString(numberLocale, {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })
-                              )
-                            ) : (
-                              amount.toLocaleString(numberLocale, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })
-                            )}
+                          <td className="py-2 px-2 text-right">
+                            {amount.toLocaleString(numberLocale, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
                           </td>
                         </tr>
                       );
@@ -995,7 +941,9 @@ export default function DashboardPage() {
                     <td className="py-2 px-2">
                       {new Date(tr.trade.timestamp).toLocaleDateString(numberLocale)}
                     </td>
-                    <td className="py-2 px-2 font-mono">{tr.trade.userId}</td>
+                    <td className="py-2 px-2 font-mono">
+                      {displayResultUserId(tr.trade.userId)}
+                    </td>
                     <td className="py-2 px-2">
                       {tr.trade.side === "maker" ? t("sideMaker") : t("sideTaker")}
                     </td>
@@ -1008,7 +956,8 @@ export default function DashboardPage() {
                       {tr.allocations.length
                         ? tr.allocations.map((a, j) => (
                             <div key={j} className="leading-tight py-0.5">
-                              {a.userId}: {a.amountUsd.toFixed(4)} ({a.rebatePercent}%)
+                              {displayResultUserId(a.userId)}: {a.amountUsd.toFixed(4)} (
+                              {a.rebatePercent}%)
                             </div>
                           ))
                         : t("tradeAllocEmpty")}
@@ -1077,7 +1026,9 @@ export default function DashboardPage() {
                           : "-";
                     return (
                       <tr key={u.id} className="border-b border-slate-100">
-                        <td className="py-2 px-2 font-mono">{u.id}</td>
+                        <td className="py-2 px-2 font-mono">
+                          {displayResultUserId(u.id)}
+                        </td>
                         <td className="py-2 px-2">
                           {u.type === "client"
                             ? t("typeClient")
