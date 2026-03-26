@@ -145,6 +145,7 @@ const zhTW = {
   rulesThTakerCfg: "Taker 設定值",
   rulesThMakerPct: "Maker (%)",
   rulesThTakerPct: "Taker (%)",
+  rulesThCommissionRebate: "Commission Rebate",
 
   rulesEdgexHeading: "EdgeX 固定分成",
   rulesThDirection: "方向",
@@ -308,7 +309,7 @@ const en: Record<MessageKey, string> = {
   rulesEditHintAfter:
     " column appears: fee = volume × value ÷ 10,000.",
 
-  rulesVipHeading: "VIP tiers & Maker/Taker fees",
+  rulesVipHeading: "VIP tiers & Maker/Taker fees/Commission Rebate",
   rulesVipNoteOnlySelf: "30-day volume counts self only.",
   rulesThVipName: "VIP name",
   rulesThThreshold: "Threshold (USD)",
@@ -316,6 +317,7 @@ const en: Record<MessageKey, string> = {
   rulesThTakerCfg: "Taker config",
   rulesThMakerPct: "Maker (%)",
   rulesThTakerPct: "Taker (%)",
+  rulesThCommissionRebate: "Commission Rebate",
 
   rulesEdgexHeading: "EdgeX fixed share",
   rulesThDirection: "Side",

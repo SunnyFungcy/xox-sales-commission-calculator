@@ -5,6 +5,7 @@
  */
 import { useCallback, useState } from "react";
 import type { CalculatorRules } from "@/lib/calculator-rules";
+import { VIP_COMMISSION_REBATE_PERCENT } from "@/config/vip";
 import {
   getDefaultCalculatorRules,
   saveCalculatorRulesToStorage,
@@ -164,7 +165,7 @@ export function RulesReferenceSection({
               </p>
               <div className="overflow-x-auto rounded border border-slate-200">
                 <table
-                  className={`w-full text-sm border-collapse ${editing && draft ? "min-w-[720px]" : "min-w-[520px]"}`}
+                  className={`w-full text-sm border-collapse ${editing && draft ? "min-w-[800px]" : "min-w-[600px]"}`}
                 >
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50">
@@ -178,6 +179,7 @@ export function RulesReferenceSection({
                       )}
                       <th className="text-right py-2 px-3">{t("rulesThMakerPct")}</th>
                       <th className="text-right py-2 px-3">{t("rulesThTakerPct")}</th>
+                      <th className="text-right py-2 px-3">{t("rulesThCommissionRebate")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -247,6 +249,11 @@ export function RulesReferenceSection({
                         </td>
                         <td className="py-2 px-3 text-right font-mono text-slate-600">
                           {formatFeePercentLabel(vipRow.takerBps)}
+                        </td>
+                        <td className="py-2 px-3 text-right font-mono text-slate-600">
+                          {VIP_COMMISSION_REBATE_PERCENT[vipRow.id] != null
+                            ? `${VIP_COMMISSION_REBATE_PERCENT[vipRow.id]}%`
+                            : "—"}
                         </td>
                       </tr>
                     ))}

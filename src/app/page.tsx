@@ -947,7 +947,7 @@ export default function DashboardPage() {
                   <th className="text-right py-2 px-2">{t("thVolume")}</th>
                   <th className="text-right py-2 px-2">{t("thFee")}</th>
                   <th className="text-right py-2 px-2">{t("thPlatformNet")}</th>
-                  <th className="text-left py-2 px-2">{t("thAllocations")}</th>
+                  <th className="text-right py-2 px-2">{t("thAllocations")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -965,7 +965,7 @@ export default function DashboardPage() {
                     </td>
                     <td className="py-2 px-2 text-right">{tr.feeUsd.toFixed(4)}</td>
                     <td className="py-2 px-2 text-right">{tr.platformNetUsd.toFixed(4)}</td>
-                    <td className="py-2 px-2 text-left align-top">
+                    <td className="py-2 px-2 text-right align-top">
                       {tr.allocations.length
                         ? tr.allocations.map((a, j) => (
                             <div key={j} className="leading-tight py-0.5">

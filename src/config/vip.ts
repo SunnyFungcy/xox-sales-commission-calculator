@@ -20,6 +20,15 @@ export const VIP_SCHEME: VIPTier[] = [
   { id: "vip6", name: "VIP 6", minVolumeUsd: 2_000_000_000, makerBps: 0.6, takerBps: 2.4 },
 ];
 
+/** 規則參考表：VIP 1–5 對應之 Commission Rebate（%）；Non VIP / VIP 6 無此對照 */
+export const VIP_COMMISSION_REBATE_PERCENT: Partial<Record<string, number>> = {
+  vip5: 50,
+  vip4: 45,
+  vip3: 40,
+  vip2: 35,
+  vip1: 30,
+};
+
 export function getVIPTierByVolume(
   volume30dUsd: number,
   scheme: VIPTier[] = VIP_SCHEME
