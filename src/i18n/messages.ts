@@ -81,17 +81,21 @@ const zhTW = {
   userTableHint1:
     "本人列為您的返傭總額。其餘用戶列顯示：本人因「該用戶作為交易者」的成交所獲得之返傭（例如 b 成交對應上線第 1 層那份、c 成交對應上線第 2 層那份）。",
   rebateEquationSummary: "返傭計算公式（點開展開）",
-  rebateEquationBody: `【單筆返傭基數】與「平台淨收入」欄位一致（已先扣 EdgeX）：
-rebateBase = 成交量 × (VIP Maker 或 Taker 費率) − 成交量 × (EdgeX Maker 或 Taker 固定分成)
-         = feeUsd − edgexUsd = platformNetUsd
-
-若 rebateBase ≤ 0，該筆不分配返傭。
-
-【多層階差】沿推薦鏈 [交易者, 上線1, 上線2, …]（至多三層），對每一對相鄰 (下線, 上線)：
-上線金額 = rebateBase × max(0, Commission Rebate%(上線) − Commission Rebate%(下線)) ÷ 100
-
-【手動覆蓋】若設定「從用戶（產生者）→ 給用戶」的覆蓋比例，則該邊以覆蓋% 取代階差%。
-【雙大使】若交易者與該上線同為大使／投資者，該邊階差視為 0（除非覆蓋另有指定）。`,
+  rebateEqSettingsTitle: "本次設定值",
+  rebateEqEdgeRateMaker: "EdgeX Maker 費率",
+  rebateEqEdgeRateTaker: "EdgeX Taker 費率",
+  rebateEqTradeLabel: "單筆代入",
+  rebateEqVipRateMaker: "VIP Maker 費率",
+  rebateEqVipRateTaker: "VIP Taker 費率",
+  rebateEqEdgeBreakdown: "相鄰邊分配（階差）",
+  rebateEqNoUpline: "此筆交易無上線可分配。",
+  rebateEqNoTrade: "目前無交易可展示代入公式，請先新增交易並計算。",
+  rebateEqOverrideUsed: "此邊使用覆蓋",
+  rebateEqDualAmbassadorZero: "此邊=0（雙大使規則）",
+  rebateEqTraderRebatePct: "交易者 Commission Rebate%",
+  rebateEqSummaryCheckTitle: "總結核對（應與上方 Summary 一致）",
+  rebateEqSummarySelf: "本人總返傭 = Σ(本人在各 trade allocation)",
+  rebateEqSummaryTotal: "返傭支出合計 = Σ(all allocations)",
   userTableWarnZero:
     "目前所有返傭為 0。請檢查下方「交易明細」：若每筆「手續費」為 0 或「返傭分配」皆為 —，表示無可分配之階差返傭（例如無上線、階差皆 ≤0、或交易未對應到用戶）。請確認推薦鏈與資料後重新點擊「計算」。",
 
@@ -262,17 +266,21 @@ const en: Record<MessageKey, string> = {
   userTableHint1:
     "Self row is your total rebate. Other rows show rebate you earned from trades executed by that user (e.g. b’s trades vs c’s trades in a Self→b→c chain).",
   rebateEquationSummary: "Rebate calculation formula (click to expand)",
-  rebateEquationBody: `Per-trade rebate base (same as “Platform net”; EdgeX already deducted):
-rebateBase = volume × (VIP Maker or Taker rate) − volume × (EdgeX Maker or Taker fixed share)
-         = feeUsd − edgexUsd = platformNetUsd
-
-If rebateBase ≤ 0, no rebate is allocated for that trade.
-
-Multi-level tier delta along [trader, upline1, upline2, …] (up to 3 hops). For each adjacent pair (downline, upline):
-upline amount = rebateBase × max(0, Commission Rebate%(upline) − Commission Rebate%(downline)) ÷ 100
-
-Manual override: if a row sets from-user → to-user percent, that percent replaces the tier-delta slice on that edge.
-Dual ambassador: if both trader and that upline are ambassador/investor, that edge’s slice is 0 unless override says otherwise.`,
+  rebateEqSettingsTitle: "Current settings",
+  rebateEqEdgeRateMaker: "EdgeX Maker rate",
+  rebateEqEdgeRateTaker: "EdgeX Taker rate",
+  rebateEqTradeLabel: "Per-trade substitution",
+  rebateEqVipRateMaker: "VIP Maker rate",
+  rebateEqVipRateTaker: "VIP Taker rate",
+  rebateEqEdgeBreakdown: "Adjacent-edge allocation (tier delta)",
+  rebateEqNoUpline: "No upline allocation for this trade.",
+  rebateEqNoTrade: "No trades to show yet. Add trades and calculate first.",
+  rebateEqOverrideUsed: "Override applied on this edge",
+  rebateEqDualAmbassadorZero: "Edge = 0 (dual ambassador rule)",
+  rebateEqTraderRebatePct: "Trader Commission Rebate%",
+  rebateEqSummaryCheckTitle: "Summary check (should match top Summary)",
+  rebateEqSummarySelf: "Self total rebate = Σ(self allocations across trades)",
+  rebateEqSummaryTotal: "Total rebates paid = Σ(all allocations)",
   userTableWarnZero:
     "All rebates are 0. In “Trade details”, if fee is 0 or allocations are —, there is no fee-based tier-delta rebate (no upline, non-positive deltas, or bad user mapping). Fix the referral chain or data and click Calculate again.",
 

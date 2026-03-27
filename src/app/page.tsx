@@ -813,8 +813,148 @@ export default function DashboardPage() {
                   {t("rebateEquationSummary")}
                 </span>
               </summary>
-              <div className="px-3 pb-3 pt-1 text-slate-600 leading-relaxed whitespace-pre-line border-t border-slate-100">
-                {t("rebateEquationBody")}
+              <div className="px-3 pb-3 pt-2 text-slate-600 leading-relaxed border-t border-slate-100 space-y-3">
+                {(() => {
+                  const referrerMap = new Map<string, string>();
+                  users.forEach((u) => {
+                    if (u.referrerId) referrerMap.set(u.id, u.referrerId);
+                  });
+                  const edgeMakerBps = calculatorRules.edgexShare.makerBps;
+                  const edgeTakerBps = calculatorRules.edgexShare.takerBps;
+                  const edgeMakerPct = edgeMakerBps / 100;
+                  const edgeTakerPct = edgeTakerBps / 100;
+                  const shownTrades = result.tradeResults.slice(0, Math.min(3, result.tradeResults.length));
+                  const selfUserId =
+                    Array.from(result.resolvedUsers.values()).find((u) => !u.referrerId)?.id ?? null;
+                  const selfTotalUsd = selfUserId
+                    ? (result.userRebateTotalUsd.get(selfUserId) ?? 0)
+                    : 0;
+                  const totalRebateUsd = Array.from(result.userRebateTotalUsd.values()).reduce(
+                    (a, b) => a + b,
+                    0
+                  );
+
+                  const formatUsd = (n: number) =>
+                    n.toLocaleString(numberLocale, {
+                      minimumFractionDigits: 4,
+                      maximumFractionDigits: 4,
+                    });
+                  const formatPct = (n: number) =>
+                    `${n.toLocaleString(numberLocale, {
+                      minimumFractionDigits: 3,
+                      maximumFractionDigits: 4,
+                    })}%`;
+
+                  return (
+                    <>
+                      <div className="space-y-1">
+                        <div className="font-medium text-slate-700">{t("rebateEqSettingsTitle")}</div>
+                        <div>
+                          {t("rebateEqEdgeRateMaker")}: {formatPct(edgeMakerPct)} ({edgeMakerBps} bps)
+                        </div>
+                        <div>
+                          {t("rebateEqEdgeRateTaker")}: {formatPct(edgeTakerPct)} ({edgeTakerBps} bps)
+                        </div>
+                      </div>
+
+                      {shownTrades.length === 0 ? (
+                        <p className="text-slate-500">{t("rebateEqNoTrade")}</p>
+                      ) : (
+                        shownTrades.map((tr, idx) => {
+                          const resolvedTrader = result.resolvedUsers.get(tr.trade.userId);
+                          const traderRebatePct = resolvedTrader?.rebatePercent ?? 0;
+                          const vipMakerPct = (resolvedTrader?.vipTier.makerBps ?? 0) / 100;
+                          const vipTakerPct = (resolvedTrader?.vipTier.takerBps ?? 0) / 100;
+                          const vipRatePct =
+                            tr.trade.side === "maker" ? vipMakerPct : vipTakerPct;
+                          const vipRateBps =
+                            tr.trade.side === "maker"
+                              ? (resolvedTrader?.vipTier.makerBps ?? 0)
+                              : (resolvedTrader?.vipTier.takerBps ?? 0);
+                          const edgeRatePct =
+                            tr.trade.side === "maker" ? edgeMakerPct : edgeTakerPct;
+
+                          const chain: string[] = [tr.trade.userId];
+                          let current = tr.trade.userId;
+                          for (let i = 0; i < 2; i++) {
+                            const ref = referrerMap.get(current);
+                            if (!ref) break;
+                            chain.push(ref);
+                            current = ref;
+                          }
+
+                          return (
+                            <div key={idx} className="rounded border border-slate-200 bg-white p-3 space-y-1">
+                              <div className="font-medium text-slate-700">
+                                {t("rebateEqTradeLabel")} #{idx + 1} ({t("thTradeUserCol")}={displayResultUserId(tr.trade.userId)}, {t("thDirection")}={tr.trade.side === "maker" ? t("sideMaker") : t("sideTaker")}, {t("thVolume")}={tr.trade.volumeUsd.toLocaleString(numberLocale, { maximumFractionDigits: 0 })})
+                              </div>
+                              <div>
+                                {t("rebateEqVipRateMaker")}: {formatPct(vipMakerPct)} ({resolvedTrader?.vipTier.makerBps ?? 0} bps), {t("rebateEqVipRateTaker")}: {formatPct(vipTakerPct)} ({resolvedTrader?.vipTier.takerBps ?? 0} bps)
+                              </div>
+                              <div>
+                                feeUsd = volume × VIP_rate = {tr.trade.volumeUsd.toLocaleString(numberLocale, { maximumFractionDigits: 0 })} × {formatPct(vipRatePct)} = {formatUsd(tr.feeUsd)}
+                              </div>
+                              <div>
+                                edgexUsd = volume × EdgeX_rate = {tr.trade.volumeUsd.toLocaleString(numberLocale, { maximumFractionDigits: 0 })} × {formatPct(edgeRatePct)} = {formatUsd(tr.edgexUsd)}
+                              </div>
+                              <div>
+                                rebateBase = feeUsd − edgexUsd = {formatUsd(tr.feeUsd)} − {formatUsd(tr.edgexUsd)} = {formatUsd(tr.platformNetUsd)}
+                              </div>
+                              <div className="pt-1 text-slate-700">{t("rebateEqEdgeBreakdown")}</div>
+                              {chain.length < 2 ? (
+                                <div className="text-slate-500">{t("rebateEqNoUpline")}</div>
+                              ) : (
+                                chain.slice(0, -1).map((downId, edgeIdx) => {
+                                  const upId = chain[edgeIdx + 1];
+                                  const downPct =
+                                    result.resolvedUsers.get(downId)?.rebatePercent ?? 0;
+                                  const upPct =
+                                    result.resolvedUsers.get(upId)?.rebatePercent ?? 0;
+                                  const override = overrides.find(
+                                    (o) => o.fromUserId === tr.trade.userId && o.toUserId === upId
+                                  );
+                                  const traderIsAI =
+                                    result.resolvedUsers.get(tr.trade.userId)?.isAmbassadorOrInvestor ??
+                                    false;
+                                  const upIsAI =
+                                    result.resolvedUsers.get(upId)?.isAmbassadorOrInvestor ?? false;
+                                  const isDualAmbassador = !override && traderIsAI && upIsAI;
+                                  const slicePct = override
+                                    ? Math.max(0, override.rebatePercent)
+                                    : isDualAmbassador
+                                      ? 0
+                                      : Math.max(0, upPct - downPct);
+                                  const amount = tr.platformNetUsd * (slicePct / 100);
+
+                                  return (
+                                    <div key={`${idx}-${edgeIdx}`} className="text-slate-600">
+                                      {displayResultUserId(upId)} = rebateBase × max(0, {upPct}% − {downPct}%) ÷ 100 = {formatUsd(amount)}
+                                      {override ? ` · ${t("rebateEqOverrideUsed")} ${override.rebatePercent}%` : ""}
+                                      {isDualAmbassador ? ` · ${t("rebateEqDualAmbassadorZero")}` : ""}
+                                    </div>
+                                  );
+                                })
+                              )}
+                              <div className="text-slate-500">
+                                {t("rebateEqTraderRebatePct")}: {displayResultUserId(tr.trade.userId)} = {traderRebatePct}%
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+
+                      <div className="rounded border border-slate-200 bg-white p-3 space-y-1">
+                        <div className="font-medium text-slate-700">{t("rebateEqSummaryCheckTitle")}</div>
+                        <div>
+                          {t("rebateEqSummarySelf")} = {formatUsd(selfTotalUsd)}
+                        </div>
+                        <div>
+                          {t("rebateEqSummaryTotal")} = {formatUsd(totalRebateUsd)}
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </details>
             {result.tradeResults.length > 0 &&
