@@ -154,14 +154,14 @@ export function resolveUsers(
         ? getVIPTierByLabel(grade.commissionVip, vipScheme) ??
           getVIPTierByVolume(volume30dUsd, vipScheme)
         : getVIPTierByVolume(volume30dUsd, vipScheme);
-      rebatePercent = grade?.commissionRebatePercent ?? 0;
+      rebatePercent = lookupCommissionRebateByVipTierId(vipTier.id);
     } else if (isInvestor && u.investorGradeId) {
       const grade = getInvestorGradeById(u.investorGradeId, invGrades);
       vipTier = grade
         ? getVIPTierByLabel(grade.commissionVip, vipScheme) ??
           getVIPTierByVolume(volume30dUsd, vipScheme)
         : getVIPTierByVolume(volume30dUsd, vipScheme);
-      rebatePercent = grade?.commissionRebatePercent ?? 0;
+      rebatePercent = lookupCommissionRebateByVipTierId(vipTier.id);
     } else {
       const overrideTier = u.vipTierId ? getVIPTierById(u.vipTierId, vipScheme) : undefined;
       vipTier = overrideTier ?? getVIPTierByVolume(volume30dUsd, vipScheme);

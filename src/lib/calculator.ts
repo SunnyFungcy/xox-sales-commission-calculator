@@ -69,11 +69,6 @@ export function runCalculator(input: CalculatorInput): CalculatorResult {
     if (u.referrerId) referrerMap.set(u.id, u.referrerId);
   });
 
-  const isAmbassadorOrInvestor = (userId: string) => {
-    const r = resolvedUsers.get(userId);
-    return r?.isAmbassadorOrInvestor ?? false;
-  };
-
   const tradeResults: TradeResult[] = [];
   let platformTotalNetUsd = 0;
   const userRebateTotalUsd = new Map<string, number>();
@@ -108,8 +103,7 @@ export function runCalculator(input: CalculatorInput): CalculatorResult {
       rebateBaseUsd,
       chain,
       rebatePercents,
-      overrides,
-      isAmbassadorOrInvestor
+      overrides
     );
 
     tradeResults.push({

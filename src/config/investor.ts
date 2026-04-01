@@ -76,7 +76,7 @@ export const INVESTOR_GRADES: InvestorGrade[] = [
     usdt: 3_000,
     lockUpMonths: 1,
     commissionVip: "VIP 1",
-    commissionRebatePercent: 30,
+    commissionRebatePercent: 25,
     pointsMultiplier: 1.1,
     airdrop: true,
     turnoverRequirement: "-",

@@ -56,8 +56,7 @@ export function calcRebateAllocations(
   rebateBaseUsd: number,
   chain: string[],
   rebatePercents: number[], // 与 chain 同序 [交易者, 上线1, 上线2]
-  overrides: RebateOverrideInput[],
-  isAmbassadorOrInvestor: (userId: string) => boolean
+  overrides: RebateOverrideInput[]
 ): RebateAllocation[] {
   const result: RebateAllocation[] = [];
   const traderId = chain[0];
@@ -75,11 +74,6 @@ export function calcRebateAllocations(
     let slicePercent: number;
     if (override !== null) {
       slicePercent = Math.max(0, override);
-    } else if (
-      isAmbassadorOrInvestor(upId) &&
-      isAmbassadorOrInvestor(traderId)
-    ) {
-      slicePercent = 0;
     } else {
       slicePercent = Math.max(0, rUp - rDown);
     }

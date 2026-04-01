@@ -87,9 +87,9 @@ const zhTW = {
   rebateEqNoUpline: "此筆無上線，無階差分配。",
   rebateEqNoTrade: "尚無交易可展示，請先計算。",
   rebateEqOverrideShort: "覆蓋",
-  rebateEqDualAmbassadorShort: "雙大使=0",
   rebateEqSelfShort: "本人",
   rebateEqTotalShort: "返傭合計",
+  rebateEqHide: "隱藏",
   userTableWarnZero:
     "目前所有返傭為 0。請檢查下方「交易明細」：若每筆「手續費」為 0 或「返傭分配」皆為 —，表示無可分配之階差返傭（例如無上線、階差皆 ≤0、或交易未對應到用戶）。請確認推薦鏈與資料後重新點擊「計算」。",
 
@@ -266,9 +266,9 @@ const en: Record<MessageKey, string> = {
   rebateEqNoUpline: "No upline — no tier-delta split.",
   rebateEqNoTrade: "No trades to show. Calculate first.",
   rebateEqOverrideShort: "override",
-  rebateEqDualAmbassadorShort: "dual amb.=0",
   rebateEqSelfShort: "Self",
   rebateEqTotalShort: "Rebates total",
+  rebateEqHide: "Hide",
   userTableWarnZero:
     "All rebates are 0. In “Trade details”, if fee is 0 or allocations are —, there is no fee-based tier-delta rebate (no upline, non-positive deltas, or bad user mapping). Fix the referral chain or data and click Calculate again.",
 

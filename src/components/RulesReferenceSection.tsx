@@ -5,7 +5,11 @@
  */
 import { useCallback, useState } from "react";
 import type { CalculatorRules } from "@/lib/calculator-rules";
-import { VIP_COMMISSION_REBATE_PERCENT } from "@/config/vip";
+import {
+  VIP_COMMISSION_REBATE_PERCENT,
+  getVIPTierByLabel,
+  lookupCommissionRebateByVipTierId,
+} from "@/config/vip";
 import {
   getDefaultCalculatorRules,
   saveCalculatorRulesToStorage,
@@ -26,6 +30,12 @@ function formatFeePercentLabel(configValue: number): string {
 
 function cloneRules(r: CalculatorRules): CalculatorRules {
   return JSON.parse(JSON.stringify(r)) as CalculatorRules;
+}
+
+function commissionRebateByVipLabel(label: string): number {
+  const tier = getVIPTierByLabel(label);
+  if (!tier) return 0;
+  return lookupCommissionRebateByVipTierId(tier.id);
 }
 
 type PasswordMode = "unlock" | "save" | "reset" | null;
@@ -494,7 +504,9 @@ export function RulesReferenceSection({
                               }}
                             />
                           ) : (
-                            <span className="font-mono">{g.commissionRebatePercent}%</span>
+                            <span className="font-mono">
+                              {commissionRebateByVipLabel(g.commissionVip)}%
+                            </span>
                           )}
                         </td>
                       </tr>
@@ -564,7 +576,9 @@ export function RulesReferenceSection({
                               }}
                             />
                           ) : (
-                            <span className="font-mono">{g.commissionRebatePercent}%</span>
+                            <span className="font-mono">
+                              {commissionRebateByVipLabel(g.commissionVip)}%
+                            </span>
                           )}
                         </td>
                       </tr>

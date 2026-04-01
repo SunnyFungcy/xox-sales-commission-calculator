@@ -175,6 +175,7 @@ export default function DashboardPage() {
   const [overrideRows, setOverrideRows] = useState<OverrideRow[]>([]);
   const [result, setResult] = useState<CalculatorResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [rebateEqExpanded, setRebateEqExpanded] = useState(false);
   const [calculatorRules, setCalculatorRules] = useState<CalculatorRules>(() =>
     getDefaultCalculatorRules()
   );
@@ -807,12 +808,18 @@ export default function DashboardPage() {
           <section className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm overflow-x-auto">
             <h2 className="text-lg font-semibold text-slate-700 mb-4">{t("userTableTitle")}</h2>
             <p className="text-sm text-slate-500 mb-3">{t("userTableHint1")}</p>
-            <details className="mb-3 text-sm border border-slate-200 rounded-lg bg-slate-50/90 open:bg-slate-50">
-              <summary className="cursor-pointer select-none px-3 py-2 text-slate-700 hover:text-slate-900 list-none [&::-webkit-details-marker]:hidden">
+            <div className="mb-3 text-sm border border-slate-200 rounded-lg bg-slate-50/90">
+              <button
+                type="button"
+                onClick={() => setRebateEqExpanded((v) => !v)}
+                className="w-full text-left cursor-pointer select-none px-3 py-2 text-slate-700 hover:text-slate-900 flex items-center gap-2"
+              >
+                <span className="text-slate-500 w-4">{rebateEqExpanded ? "▼" : "▶"}</span>
                 <span className="underline decoration-slate-300 underline-offset-2">
                   {t("rebateEquationSummary")}
                 </span>
-              </summary>
+              </button>
+              {rebateEqExpanded && (
               <div className="px-3 pb-3 pt-2 text-slate-600 leading-relaxed border-t border-slate-100 space-y-3">
                 {(() => {
                   const referrerMap = new Map<string, string>();
@@ -896,17 +903,9 @@ export default function DashboardPage() {
                                   const override = overrides.find(
                                     (o) => o.fromUserId === tr.trade.userId && o.toUserId === upId
                                   );
-                                  const traderIsAI =
-                                    result.resolvedUsers.get(tr.trade.userId)
-                                      ?.isAmbassadorOrInvestor ?? false;
-                                  const upIsAI =
-                                    result.resolvedUsers.get(upId)?.isAmbassadorOrInvestor ?? false;
-                                  const isDualAmbassador = !override && traderIsAI && upIsAI;
                                   const slicePct = override
                                     ? Math.max(0, override.rebatePercent)
-                                    : isDualAmbassador
-                                      ? 0
-                                      : Math.max(0, upPct - downPct);
+                                    : Math.max(0, upPct - downPct);
                                   const amount = tr.feeUsd * (slicePct / 100);
 
                                   return (
@@ -919,7 +918,6 @@ export default function DashboardPage() {
                                       {override
                                         ? ` · ${t("rebateEqOverrideShort")} ${override.rebatePercent}%`
                                         : ""}
-                                      {isDualAmbassador ? ` · ${t("rebateEqDualAmbassadorShort")}` : ""}
                                     </div>
                                   );
                                 })
@@ -937,11 +935,21 @@ export default function DashboardPage() {
                           {t("rebateEqTotalShort")} {formatUsd(totalRebateUsd)}
                         </span>
                       </div>
+                      <div className="pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setRebateEqExpanded(false)}
+                          className="px-3 py-1.5 text-xs border border-slate-300 rounded hover:bg-slate-50 text-slate-700"
+                        >
+                          {t("rebateEqHide")}
+                        </button>
+                      </div>
                     </>
                   );
                 })()}
               </div>
-            </details>
+              )}
+            </div>
             {result.tradeResults.length > 0 &&
               Array.from(result.userRebateTotalUsd.values()).every((v) => v === 0) && (
               <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2 mb-3">
