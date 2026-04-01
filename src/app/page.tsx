@@ -819,10 +819,6 @@ export default function DashboardPage() {
                   users.forEach((u) => {
                     if (u.referrerId) referrerMap.set(u.id, u.referrerId);
                   });
-                  const edgeMakerBps = calculatorRules.edgexShare.makerBps;
-                  const edgeTakerBps = calculatorRules.edgexShare.takerBps;
-                  const edgeMakerPct = edgeMakerBps / 100;
-                  const edgeTakerPct = edgeTakerBps / 100;
                   const shownTrades = result.tradeResults.slice(0, Math.min(3, result.tradeResults.length));
                   const selfUserId =
                     Array.from(result.resolvedUsers.values()).find((u) => !u.referrerId)?.id ?? null;
@@ -847,32 +843,21 @@ export default function DashboardPage() {
 
                   return (
                     <>
-                      <div className="space-y-1">
-                        <div className="font-medium text-slate-700">{t("rebateEqSettingsTitle")}</div>
-                        <div>
-                          {t("rebateEqEdgeRateMaker")}: {formatPct(edgeMakerPct)} ({edgeMakerBps} bps)
-                        </div>
-                        <div>
-                          {t("rebateEqEdgeRateTaker")}: {formatPct(edgeTakerPct)} ({edgeTakerBps} bps)
-                        </div>
-                      </div>
+                      <p className="text-xs text-slate-500 leading-snug">{t("rebateEqIntro")}</p>
 
                       {shownTrades.length === 0 ? (
                         <p className="text-slate-500">{t("rebateEqNoTrade")}</p>
                       ) : (
                         shownTrades.map((tr, idx) => {
                           const resolvedTrader = result.resolvedUsers.get(tr.trade.userId);
-                          const traderRebatePct = resolvedTrader?.rebatePercent ?? 0;
                           const vipMakerPct = (resolvedTrader?.vipTier.makerBps ?? 0) / 100;
                           const vipTakerPct = (resolvedTrader?.vipTier.takerBps ?? 0) / 100;
-                          const vipRatePct =
-                            tr.trade.side === "maker" ? vipMakerPct : vipTakerPct;
-                          const vipRateBps =
-                            tr.trade.side === "maker"
-                              ? (resolvedTrader?.vipTier.makerBps ?? 0)
-                              : (resolvedTrader?.vipTier.takerBps ?? 0);
-                          const edgeRatePct =
-                            tr.trade.side === "maker" ? edgeMakerPct : edgeTakerPct;
+                          const isMaker = tr.trade.side === "maker";
+                          const vipRatePct = isMaker ? vipMakerPct : vipTakerPct;
+                          const volStr = tr.trade.volumeUsd.toLocaleString(numberLocale, {
+                            maximumFractionDigits: 0,
+                          });
+                          const sideLabel = isMaker ? t("sideMaker") : t("sideTaker");
 
                           const chain: string[] = [tr.trade.userId];
                           let current = tr.trade.userId;
@@ -884,25 +869,23 @@ export default function DashboardPage() {
                           }
 
                           return (
-                            <div key={idx} className="rounded border border-slate-200 bg-white p-3 space-y-1">
-                              <div className="font-medium text-slate-700">
-                                {t("rebateEqTradeLabel")} #{idx + 1} ({t("thTradeUserCol")}={displayResultUserId(tr.trade.userId)}, {t("thDirection")}={tr.trade.side === "maker" ? t("sideMaker") : t("sideTaker")}, {t("thVolume")}={tr.trade.volumeUsd.toLocaleString(numberLocale, { maximumFractionDigits: 0 })})
+                            <div
+                              key={idx}
+                              className="rounded border border-slate-200 bg-white p-3 space-y-1.5 text-sm"
+                            >
+                              <div className="font-medium text-slate-800">
+                                #{idx + 1}{" "}
+                                {displayResultUserId(tr.trade.userId)} · {sideLabel} · {volStr}
                               </div>
-                              <div>
-                                {t("rebateEqVipRateMaker")}: {formatPct(vipMakerPct)} ({resolvedTrader?.vipTier.makerBps ?? 0} bps), {t("rebateEqVipRateTaker")}: {formatPct(vipTakerPct)} ({resolvedTrader?.vipTier.takerBps ?? 0} bps)
+                              <div className="font-mono text-[13px] text-slate-700">
+                                feeUsd = {volStr} × {formatPct(vipRatePct)} = {formatUsd(tr.feeUsd)}
                               </div>
-                              <div>
-                                feeUsd = volume × VIP_rate = {tr.trade.volumeUsd.toLocaleString(numberLocale, { maximumFractionDigits: 0 })} × {formatPct(vipRatePct)} = {formatUsd(tr.feeUsd)}
+                              <div className="text-xs text-slate-500 font-mono">
+                                {t("rebateEqNetShort")} = {formatUsd(tr.feeUsd)} − {formatUsd(tr.edgexUsd)} ={" "}
+                                {formatUsd(tr.platformNetUsd)}
                               </div>
-                              <div>
-                                edgexUsd = volume × EdgeX_rate = {tr.trade.volumeUsd.toLocaleString(numberLocale, { maximumFractionDigits: 0 })} × {formatPct(edgeRatePct)} = {formatUsd(tr.edgexUsd)}
-                              </div>
-                              <div>
-                                rebateBase = feeUsd − edgexUsd = {formatUsd(tr.feeUsd)} − {formatUsd(tr.edgexUsd)} = {formatUsd(tr.platformNetUsd)}
-                              </div>
-                              <div className="pt-1 text-slate-700">{t("rebateEqEdgeBreakdown")}</div>
                               {chain.length < 2 ? (
-                                <div className="text-slate-500">{t("rebateEqNoUpline")}</div>
+                                <div className="text-slate-500 text-xs">{t("rebateEqNoUpline")}</div>
                               ) : (
                                 chain.slice(0, -1).map((downId, edgeIdx) => {
                                   const upId = chain[edgeIdx + 1];
@@ -914,8 +897,8 @@ export default function DashboardPage() {
                                     (o) => o.fromUserId === tr.trade.userId && o.toUserId === upId
                                   );
                                   const traderIsAI =
-                                    result.resolvedUsers.get(tr.trade.userId)?.isAmbassadorOrInvestor ??
-                                    false;
+                                    result.resolvedUsers.get(tr.trade.userId)
+                                      ?.isAmbassadorOrInvestor ?? false;
                                   const upIsAI =
                                     result.resolvedUsers.get(upId)?.isAmbassadorOrInvestor ?? false;
                                   const isDualAmbassador = !override && traderIsAI && upIsAI;
@@ -924,33 +907,35 @@ export default function DashboardPage() {
                                     : isDualAmbassador
                                       ? 0
                                       : Math.max(0, upPct - downPct);
-                                  const amount = tr.platformNetUsd * (slicePct / 100);
+                                  const amount = tr.feeUsd * (slicePct / 100);
 
                                   return (
-                                    <div key={`${idx}-${edgeIdx}`} className="text-slate-600">
-                                      {displayResultUserId(upId)} = rebateBase × max(0, {upPct}% − {downPct}%) ÷ 100 = {formatUsd(amount)}
-                                      {override ? ` · ${t("rebateEqOverrideUsed")} ${override.rebatePercent}%` : ""}
-                                      {isDualAmbassador ? ` · ${t("rebateEqDualAmbassadorZero")}` : ""}
+                                    <div
+                                      key={`${idx}-${edgeIdx}`}
+                                      className="font-mono text-[13px] text-slate-700 border-l-2 border-slate-200 pl-2"
+                                    >
+                                      {displayResultUserId(upId)}: {formatUsd(tr.feeUsd)} × max(0,{" "}
+                                      {upPct}% − {downPct}%) ÷ 100 = {formatUsd(amount)}
+                                      {override
+                                        ? ` · ${t("rebateEqOverrideShort")} ${override.rebatePercent}%`
+                                        : ""}
+                                      {isDualAmbassador ? ` · ${t("rebateEqDualAmbassadorShort")}` : ""}
                                     </div>
                                   );
                                 })
                               )}
-                              <div className="text-slate-500">
-                                {t("rebateEqTraderRebatePct")}: {displayResultUserId(tr.trade.userId)} = {traderRebatePct}%
-                              </div>
                             </div>
                           );
                         })
                       )}
 
-                      <div className="rounded border border-slate-200 bg-white p-3 space-y-1">
-                        <div className="font-medium text-slate-700">{t("rebateEqSummaryCheckTitle")}</div>
-                        <div>
-                          {t("rebateEqSummarySelf")} = {formatUsd(selfTotalUsd)}
-                        </div>
-                        <div>
-                          {t("rebateEqSummaryTotal")} = {formatUsd(totalRebateUsd)}
-                        </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-700 border-t border-slate-100 pt-2">
+                        <span>
+                          {t("rebateEqSelfShort")} {formatUsd(selfTotalUsd)}
+                        </span>
+                        <span>
+                          {t("rebateEqTotalShort")} {formatUsd(totalRebateUsd)}
+                        </span>
                       </div>
                     </>
                   );

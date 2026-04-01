@@ -1,7 +1,7 @@
 /**
  * 单笔手续费与平台净收入
  * 手续费始终按「执行该笔交易的用户」的 VIP 等级；EdgeX 固定分成后为平台净收入。
- * 多層返傭分配以 platformNetUsd（feeUsd − edgexUsd）為階差基數；feeUsd／edgexUsd 仍供明細欄位。
+ * 多層返傭階差以毛手續費 feeUsd 為基數；platformNetUsd（feeUsd − edgexUsd）僅供報表／平台淨收入，不參與返傭乘數。
  */
 import { getVIPTierByVolume, getVIPTierByLabel, type VIPTier } from "@/config/vip";
 import { EDGEX_SHARE, type EdgexShare } from "@/config/edgex";

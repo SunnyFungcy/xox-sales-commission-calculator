@@ -1,5 +1,5 @@
 /**
- * 主计算流程：交易流水 -> 每笔 fee、平台净收入、返佣分配（以扣 EdgeX 後之 platformNetUsd 為階差基數）-> 汇总报表
+ * 主计算流程：交易流水 -> 每笔 fee、平台净收入、返佣分配（階差基數為毛 feeUsd，不扣 EdgeX）-> 汇总报表
  */
 import type { UserInput, TradeInput, RebateOverrideInput } from "@/types";
 import type { ResolvedUser } from "@/lib/resolve-users";
@@ -103,7 +103,7 @@ export function runCalculator(input: CalculatorInput): CalculatorResult {
     const rebatePercents = chain.map(
       (id) => resolvedUsers.get(id)?.rebatePercent ?? 0
     );
-    const rebateBaseUsd = feeResult.platformNetUsd;
+    const rebateBaseUsd = feeResult.feeUsd;
     const allocations = calcRebateAllocations(
       rebateBaseUsd,
       chain,

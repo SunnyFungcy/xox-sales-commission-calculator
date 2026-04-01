@@ -1,7 +1,7 @@
 /**
  * 多層返傭分配（至多 3 層用戶鏈）
- * 基數 = rebateBaseUsd，與 calcFeeAndPlatformNet 之 platformNetUsd 一致：
- * （成交量 × VIP Maker/Taker 費率）−（成交量 × EdgeX 固定分成）= feeUsd − edgexUsd。
+ * 基數 rebateBaseUsd = 該筆「毛 VIP 手續費」feeUsd（成交量 × VIP Maker/Taker ÷ 10_000），
+ * 不扣 EdgeX。platformNetUsd 僅供報表，不參與此處分配。
  * 若 rebateBaseUsd ≤ 0，不分配返傭。每一對相鄰 (下線, 上線)：
  * 上線拿 rebateBaseUsd × (上線% − 下線%) ÷ 100（差 ≤ 0 則 0）。
  * 交易者本人不在此函式內另發「整筆 r0%」切片，僅上線依階差拿錢。
@@ -11,7 +11,7 @@ import type { RebateOverrideInput } from "@/types";
 export interface RebateAllocation {
   userId: string;
   amountUsd: number;
-  /** 本筆對該用戶生效的「階差百分比」或覆蓋值（對 rebateBaseUsd） */
+  /** 本筆對該用戶生效的「階差百分比」或覆蓋值（對 feeUsd 基數） */
   rebatePercent: number;
   layer: number; // 1=第一個上線, 2=第二個上線（無交易者列）
   fromTraderUserId: string;
@@ -50,8 +50,7 @@ export function getOverrideRebatePercent(
 }
 
 /**
- * 依「返傭基數 × 相鄰兩層 Commission Rebate 差」分配。
- * 驗算時請以 rebateBase（扣 EdgeX 後）代入；舊範例若以毛 fee 代入需改算。
+ * 依「feeUsd × 相鄰兩層 Commission Rebate 差」分配。
  */
 export function calcRebateAllocations(
   rebateBaseUsd: number,

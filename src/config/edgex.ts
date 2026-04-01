@@ -1,11 +1,12 @@
 /**
  * EdgeX 固定分成（平台成本）
+ * 與 VIP 表相同：`顯示 % = makerBps ÷ 100`（見 RulesReferenceSection）；實際費率 = makerBps ÷ 10_000
  */
 export type EdgexShare = { makerBps: number; takerBps: number };
 
 export const EDGEX_SHARE: EdgexShare = {
-  makerBps: 0.06,   // 0.006% = 0.06 bps (basis points, 1 bps = 0.01%)
-  takerBps: 0.19,   // 0.019%
+  makerBps: 0.6, // 0.006%
+  takerBps: 1.9, // 0.019%
 } as const;
 
 export function edgexMakerRate(): number {
